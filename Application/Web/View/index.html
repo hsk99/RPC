@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPC</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .layui-row {
+            padding-top: 30px;
+        }
+
+        .echarts {
+            width: 100%;
+            height: 400px;
+        }
+
+        #title {
+            text-align: center;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layui-container">
+        <div class="layui-tab" lay-filter="tab">
+            <ul class="layui-tab-title">
+                <li class="layui-this" lay-id="statistic">运行统计</li>
+                <li lay-id="log">错误日志</li>
+            </ul>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show">
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <div class="layui-form layui-form-pane">
+                                <div class="layui-form-item" style="text-align: center;">
+                                    <div class="layui-inline">
+                                        <label class="layui-form-label">运行时间</label>
+                                        <div class="layui-input-inline">
+                                            <input name="time" value="<?=date('Y-m-d')?>" class="layui-input" readonly
+                                                id="time">
+                                        </div>
+                                    </div>
+                                    <div class="layui-inline">
+                                        <label class="layui-form-label">模块</label>
+                                        <div class="layui-input-inline">
+                                            <input name="module" value="整体" class="layui-input" readonly
+                                                id="statistic_module">
+                                        </div>
+                                    </div>
+                                    <div class="layui-inline">
+                                        <label class="layui-form-label">接口</label>
+                                        <div class="layui-input-inline">
+                                            <input name="interface" value="整体" class="layui-input" readonly
+                                                id="statistic_interface">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                            <div class="echarts" id="requestAnalysis"></div>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                            <div class="echarts" id="requestReturnCodeStatistics"></div>
+                        </div>
+                    </div>
+
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <div class="echarts" id="requestCountStatistics"></div>
+                        </div>
+                    </div>
+
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <div class="echarts" id="requestTimeStatistics"></div>
+                        </div>
+                    </div>
+
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <h2 id="title"></h2>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12" style="overflow:auto;">
+                            <table class="layui-table">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width: 130px;">时间</th>
+                                        <th style="min-width: 60px;">调用总数</th>
+                                        <th style="min-width: 60px;">平均耗时</th>
+                                        <th style="min-width: 90px;">成功调用总数</th>
+                                        <th style="min-width: 90px;">成功平均耗时</th>
+                                        <th style="min-width: 90px;">失败调用总数</th>
+                                        <th style="min-width: 90px;">失败平均耗时</th>
+                                        <th style="min-width: 50px;">成功率</th>
+                                    </tr>
+                                </thead>
+                                <tbody id='list'>
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="layui-tab-item">
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <div class="layui-form layui-form-pane" lay-filter="MyForm">
+                                <div class="layui-form-item" style="text-align: center;">
+                                    <div class="layui-form-item" style="text-align: center;">
+                                        <div class="layui-inline">
+                                            <label class="layui-form-label">运行时间</label>
+                                            <div class="layui-input-inline">
+                                                <input name="start_time" value="" class="layui-input" readonly
+                                                    id="start_time">
+                                            </div>
+                                        </div>
+                                        <div class="layui-inline">
+                                            <label class="layui-form-label">模块</label>
+                                            <div class="layui-input-inline">
+                                                <input name="module" value="" class="layui-input" readonly
+                                                    id="log_module">
+                                            </div>
+                                        </div>
+                                        <div class="layui-inline">
+                                            <label class="layui-form-label">接口</label>
+                                            <div class="layui-input-inline">
+                                                <input name="interface" value="" class="layui-input" readonly
+                                                    id="log_interface">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <div id="log" style="overflow:auto;">
+
+                            </div>
+                            <div id='log_page'
+                                style="display: none;padding-top: 20px;padding-bottom: 10px;text-align: center;">
+                                <button type="button" class="layui-btn" onclick="getLog()">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/layui/layui.js"></script>
+<script src="/static/echarts.min.js"></script>
+<script>
+    var dropdown = layui.dropdown,
+        util = layui.util,
+        element = layui.element,
+        layer = layui.layer,
+        laydate = layui.laydate,
+        form = layui.form,
+        phoneWidth = 640,
+        tab = 'statistic',
+        date = '',
+        module = '',
+        interface = '',
+        offset = 0,
+        dropdown_time,
+        dropdown_module,
+        dropdown_interface,
+        requestCountStatisticsObject,
+        requestTimeStatisticsObject,
+        requestAnalysisObject,
+        requestReturnCodeStatisticsObject;
+
+    // 初始化
+    $(function () {
+        requestCountStatisticsObject = echarts.init(document.getElementById('requestCountStatistics'));
+        requestTimeStatisticsObject = echarts.init(document.getElementById('requestTimeStatistics'));
+        requestAnalysisObject = echarts.init(document.getElementById('requestAnalysis'));
+        requestReturnCodeStatisticsObject = echarts.init(document.getElementById('requestReturnCodeStatistics'));
+        date = "<?=date('Y-m-d')?>";
+
+        getTime();
+        getModules();
+        getStatistic();
+
+        element.on('tab(tab)', function (data) {
+            tab = this.getAttribute('lay-id');
+
+            if (this.getAttribute('lay-id') == 'statistic') {
+                $("#time").val("<?=date('Y-m-d')?>");
+                $("#statistic_module").val('整体');
+                $("#statistic_interface").val('整体');
+                date = "<?=date('Y-m-d')?>";
+                module = '';
+                interface = '';
+                getTime();
+                getModules();
+                getStatistic();
+
+                requestCountStatisticsObject.resize();
+                requestTimeStatisticsObject.resize();
+                requestAnalysisObject.resize();
+                requestReturnCodeStatisticsObject.resize();
+            }
+
+            if (this.getAttribute('lay-id') == 'log') {
+                $("#start_time").val('');
+                $("#log_module").val('');
+                $("#log_interface").val('');
+                $("#log_page").hide();
+                module = '';
+                interface = '';
+                offset = 0;
+                getModules();
+                getLog();
+            }
+        });
+
+        laydate.render({
+            elem: "#start_time",
+            type: 'datetime',
+            trigger: 'click',
+            format: 'yyyy-MM-dd HH:mm:ss',
+            min: -14,
+            max: "<?=date('Y-m-d 23:59:59')?>",
+            done: function (value, date, endDate) {
+                this.elem.val(value)
+                offset = 0;
+                getLog();
+            }
+        })
+
+        util.fixbar({
+            bar1: '&#xe669',
+            showHeight: 0,
+            css: { bottom: 50 },
+            click: function (type) {
+                if (type === 'bar1') {
+
+                    if (tab == 'statistic') {
+                        getTime();
+                        getModules();
+                        getStatistic();
+                    }
+
+                    if (tab == 'log') {
+                        offset = 0;
+                        getModules();
+                        getLog();
+                    }
+
+                    layer.msg('刷新数据成功', {
+                        time: 1000
+                    });
+                }
+            }
+        });
+    });
+
+    // 窗口变化图表重载大小
+    $(window).resize(function () {
+        requestCountStatisticsObject.resize();
+        requestTimeStatisticsObject.resize();
+        requestAnalysisObject.resize();
+        requestReturnCodeStatisticsObject.resize();
+    });
+
+    // 获取时间
+    function getTime() {
+        $.ajax({
+            type: "POST",
+            url: "/api/getTime",
+            dataType: "JSON",
+            success: function (response) {
+                if (dropdown_time == undefined) {
+                    dropdown_time = dropdown.render({
+                        elem: '#time',
+                        data: response,
+                        style: "width: 190px;height: 300px;;overflow:hidden auto;",
+                        click: function (obj) {
+                            this.elem.val(obj.title);
+                            date = obj.id;
+                            getStatistic();
+                        }
+                    });
+                } else {
+                    dropdown_time.reload({
+                        elem: '#time',
+                        data: response,
+                        style: "width: 190px;height: 300px;;overflow:hidden auto;",
+                        click: function (obj) {
+                            this.elem.val(obj.title);
+                            date = obj.id;
+                            getStatistic();
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    // 获取模块
+    function getModules() {
+        $.ajax({
+            type: "POST",
+            url: "/api/getModules",
+            data: { type: tab, module: '' },
+            dataType: "JSON",
+            success: function (response) {
+                if (tab == 'statistic') {
+                    response.unshift({ id: '整体', title: '整体' })
+                }
+
+                if (dropdown_module == undefined) {
+                    dropdown_module = dropdown.render({
+                        elem: '#' + tab + '_module',
+                        data: response,
+                        style: "width: 190px;height: 300px;;overflow:hidden auto;",
+                        click: function (obj) {
+                            this.elem.val(obj.title);
+                            module = obj.id == '整体' ? '' : obj.id;
+                            interface = '';
+                            $("#" + tab + "interface").val('');
+                            getInterface(obj.id);
+                        }
+                    });
+                } else {
+                    dropdown_module.reload({
+                        elem: '#' + tab + '_module',
+                        data: response,
+                        style: "width: 190px;height: 300px;;overflow:hidden auto;",
+                        click: function (obj) {
+                            this.elem.val(obj.title);
+                            module = obj.id == '整体' ? '' : obj.id;
+                            interface = '';
+                            $("#" + tab + "interface").val('');
+                            getInterface(obj.id);
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    // 获取选择模块下的接口
+    function getInterface(module) {
+        $.ajax({
+            type: "POST",
+            url: "/api/getModules",
+            data: { type: tab, module: module },
+            dataType: "JSON",
+            success: function (response) {
+                if (tab == 'statistic' && response.length === 0) {
+                    response.push({ id: '', title: '整体' })
+                }
+
+                if (dropdown_interface == undefined) {
+                    dropdown_interface = dropdown.render({
+                        show: true,
+                        elem: "#" + tab + "_interface",
+                        data: response,
+                        style: "width: 190px;height: 300px;overflow:hidden auto;",
+                        click: function (obj) {
+                            this.elem.val(obj.title);
+                            interface = obj.id;
+
+                            if (tab == 'statistic') {
+                                getStatistic();
+                            }
+
+                            if (tab == 'log') {
+                                offset = 0;
+                                getLog();
+                            }
+                        }
+                    });
+                } else {
+                    dropdown_interface.reload({
+                        show: true,
+                        elem: "#" + tab + "_interface",
+                        data: response,
+                        click: function (obj) {
+                            this.elem.val(obj.title);
+                            interface = obj.id;
+
+                            if (tab == 'statistic') {
+                                getStatistic();
+                            }
+
+                            if (tab == 'log') {
+                                offset = 0;
+                                getLog();
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    // 获取统计数据
+    function getStatistic() {
+        $.ajax({
+            type: "POST",
+            url: "/api/getStatistic",
+            data: { date: date, module: module, interface: interface },
+            dataType: "JSON",
+            success: function (response) {
+                requestAnalysis(response.requestAnalysis);
+                requestReturnCodeStatistics(response.requestReturnCodeStatistics);
+                requestCountStatistics(response.requestCountStatistics);
+                requestTimeStatistics(response.requestTimeStatistics);
+
+                var list = '';
+                for (let index = 0; index < response.list.length; index++) {
+                    const element = response.list[index];
+
+                    var style = "";
+                    if (element.total_count > 0) {
+                        style += `style="background-color: rgb(213 226 253);"`;
+                    }
+
+                    if (element.fail_count > 0) {
+                        var fail = `<a href="javascript:;" onclick="element.tabChange('tab', 'log');" style="color:red;">` + element.fail_count + `</a>`;
+                    } else {
+                        var fail = element.fail_count;
+                    }
+
+                    list += `<tr ` + style + `>
+                                <td>`+ element.time + `</td>
+                                <td>`+ element.total_count + `</td>
+                                <td>`+ element.total_avg_time + `</td>
+                                <td>`+ element.suc_count + `</td>
+                                <td>`+ element.suc_avg_time + `</td>
+                                <td>`+ fail + `</td>
+                                <td>`+ element.fail_avg_time + `</td>
+                                <td>`+ element.precent + `%</td>
+                            </tr>`;
+                }
+                if (document.body.clientWidth < phoneWidth) {
+                    var title = response.title.replace(/\s+/g, "<br>");
+                } else {
+                    var title = response.title;
+                }
+                $("#title").html(title);
+                $("#list").html(list);
+            }
+        });
+    }
+
+    // 获取日志
+    function getLog() {
+        var data = form.val("MyForm");
+        if (data.module == '' || data.interface == '') {
+            $("#log").html('请选择模块、接口')
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/api/getLog",
+            data: { module: data.module, interface: data.interface, start_time: data.start_time, offset: offset },
+            dataType: "JSON",
+            success: function (response) {
+                if (response.offset > 0) {
+                    offset = response.offset;
+                    $("#log").html(response.log);
+
+                    layui.code({
+                        elem: 'pre'
+                    });
+
+                    if (response.offset > 0 && response.offset < response.file_size) {
+                        $("#log_page").show();
+                    } else {
+                        $("#log_page").hide();
+                    }
+
+                    document.body.scrollTop = document.documentElement.scrollTop = 0;
+                } else {
+                    $("#log").html('无数据');
+                }
+            }
+        });
+    }
+
+    // 请求分析
+    function requestAnalysis(params) {
+        if (document.body.clientWidth < phoneWidth) {
+            var title = params.title.replace(/\s+/g, "\n");
+        } else {
+            var title = params.title;
+        }
+
+        var option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                confine: true,
+                formatter: '{b}: {d}%'
+            },
+            series: [
+                {
+                    name: '请求',
+                    type: 'pie',
+                    radius: '50%',
+                    label: {
+                        show: true,
+                        formatter: '{b}: {d}%'
+                    },
+                    data: [
+                        {
+                            name: '成功',
+                            value: params.suc,
+                            itemStyle: {
+                                normal: {
+                                    color: '#1e90ff'
+                                }
+                            }
+                        },
+                        {
+                            name: '失败',
+                            value: params.fail,
+                            itemStyle: {
+                                normal: {
+                                    color: '#ff4757'
+                                }
+                            }
+                        }
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };;
+
+        requestAnalysisObject.setOption(option);
+    }
+
+    // 请求返回码分析
+    function requestReturnCodeStatistics(params) {
+        if (document.body.clientWidth < phoneWidth) {
+            var title = params.title.replace(/\s+/g, "\n");
+        } else {
+            var title = params.title;
+        }
+
+        var option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                confine: true,
+                formatter: '{b}: {c}次'
+            },
+            series: [
+                {
+                    name: '返回码',
+                    type: 'pie',
+                    radius: '50%',
+                    label: {
+                        'show': true,
+                        'formatter': '{b}: {c}次'
+                    },
+                    data: params.data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };;
+
+        requestReturnCodeStatisticsObject.setOption(option);
+    }
+
+    // 请求量统计图
+    function requestCountStatistics(params) {
+        if (document.body.clientWidth < phoneWidth) {
+            var title = params.title.replace(/\s+/g, "\n");
+        } else {
+            var title = params.title;
+        }
+
+        var option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'axis',
+                confine: true,
+                position: function (point, params, dom, rect, size) {
+                    return [point[0], '10%'];
+                },
+                extraCssText: 'width:130px;'
+            },
+            legend: {
+                data: ['成功', '失败'],
+                left: 'right',
+                top: '15%'
+            },
+            dataZoom: [{
+                type: 'slider'
+            }],
+            grid: {
+                top: '25%',
+                left: '1%',
+                right: '2%',
+                bottom: '20%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: params.x
+            },
+            yAxis: {
+                type: 'value',
+                splitLine: {
+                    lineStyle: {
+                        color: ['#e2e2e2']
+                    }
+                }
+            },
+            series: [
+                {
+                    name: '成功',
+                    data: params.suc,
+                    type: 'line',
+                    smooth: true,
+                    color: '#1e90ff',
+                },
+                {
+                    name: '失败',
+                    data: params.fail,
+                    type: 'line',
+                    smooth: true,
+                    color: '#ff4757',
+                }
+            ]
+        };
+
+        requestCountStatisticsObject.setOption(option);
+    }
+
+    // 请求耗时统计图
+    function requestTimeStatistics(params) {
+        if (document.body.clientWidth < phoneWidth) {
+            var title = params.title.replace(/\s+/g, "\n");
+        } else {
+            var title = params.title;
+        }
+
+        var option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'axis',
+                confine: true,
+                position: function (point, params, dom, rect, size) {
+                    return [point[0], '10%'];
+                },
+                extraCssText: 'width:130px;'
+            },
+            legend: {
+                data: ['成功', '失败'],
+                left: 'right',
+                top: '15%'
+            },
+            dataZoom: [{
+                type: 'slider'
+            }],
+            grid: {
+                top: '25%',
+                left: '1%',
+                right: '2%',
+                bottom: '20%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: params.x
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: '成功',
+                    data: params.suc,
+                    type: 'line',
+                    smooth: true,
+                    color: '#1e90ff',
+                },
+                {
+                    name: '失败',
+                    data: params.fail,
+                    type: 'line',
+                    smooth: true,
+                    color: '#ff4757',
+                }
+            ]
+        };
+
+        requestTimeStatisticsObject.setOption(option);
+    }
+</script>

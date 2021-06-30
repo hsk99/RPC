@@ -1,0 +1,22 @@
+{
+    "name": "hsk99/rpc",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "HSK",
+            "email": "3024186605@qq.com"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "Application/Support/helpers.php"
+        ]
+    },
+    "require": {
+        "php": ">=7.0",
+        "workerman/workerman": "^4.0",
+        "workerman/gateway-worker": "^3.0",
+        "monolog/monolog": "^2.2"
+    }
+}
