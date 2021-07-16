@@ -28,7 +28,7 @@ return [
         'listen'  => 'http://127.0.0.1:50003',
         'count'   => 1,
         'session' => [
-            'session_name' => 'PHPSID',
+            'session_name' => 'RPCSESSIONID',
             'type'         => 'file',
             'config'       => [
                 'file' => [

@@ -9,6 +9,75 @@ use Support\Bootstrap\StatisticProvider;
 class Api
 {
     /**
+     * 用户登录
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-16 00:08:22
+     *
+     * @param TcpConnection $connection
+     * @param Request $request
+     *
+     * @return void
+     */
+    public static function login(TcpConnection $connection, Request $request)
+    {
+        $username = $request->post('username');
+        $password = $request->post('password');
+        $captcha  = $request->post('captcha');
+
+        if (empty($username) || empty($password) || empty($captcha)) {
+            return $connection->send(json(['code' => 0, 'msg' => '参数错误']));
+        }
+
+        if (md5($captcha) !== $request->session()->get('captcha')) {
+            return $connection->send(json(['code' => 0, 'msg' => '验证码不正确']));
+        }
+
+        if ($username !== config('app')['adminUserName'] || $password !== config('app')['adminPassWord']) {
+            return $connection->send(json(['code' => 0, 'msg' => '用户名或密码错误']));
+        }
+
+        $request->session()->delete('captcha');
+        $request->session()->set('is_login', true);
+        $connection->send(json(['code' => 1, 'msg' => '登录成功']));
+    }
+
+    /**
+     * 退出登录
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-16 00:42:09
+     *
+     * @param TcpConnection $connection
+     * @param Request $request
+     *
+     * @return void
+     */
+    public static function logout(TcpConnection $connection, Request $request)
+    {
+        $request->session()->delete('is_login');
+        $connection->send(json(['code' => 1, 'msg' => '退出成功']));
+    }
+
+    /**
+     * 校验登录
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-16 00:19:15
+     *
+     * @param TcpConnection $connection
+     * @param Request $request
+     *
+     * @return void
+     */
+    protected static function checkLogin(TcpConnection $connection, Request $request)
+    {
+        if (!$request->session()->has('is_login')) {
+            return $connection->send(json(['code' => 0, 'msg' => '未登录，请先登录']));
+        }
+    }
+
+    /**
      * 获取最近15天时间
      *
      * @Author    HSK
@@ -21,6 +90,8 @@ class Api
      */
     public static function getTIme(TcpConnection $connection, Request $request)
     {
+        self::checkLogin($connection, $request);
+
         $list = [];
 
         for ($i = 0; $i < 15; $i++) {
@@ -45,6 +116,8 @@ class Api
      */
     public static function getModules(TcpConnection $connection, Request $request)
     {
+        self::checkLogin($connection, $request);
+
         $get   = $request->get();
         $post  = $request->post();
         $param = array_merge($get, $post);
@@ -79,6 +152,8 @@ class Api
      */
     public static function getStatistic(TcpConnection $connection, Request $request)
     {
+        self::checkLogin($connection, $request);
+
         $get   = $request->get();
         $post  = $request->post();
         $param = array_merge($get, $post);
@@ -158,6 +233,8 @@ class Api
      */
     public static function getLog(TcpConnection $connection, Request $request)
     {
+        self::checkLogin($connection, $request);
+
         $get   = $request->get();
         $post  = $request->post();
         $param = array_merge($get, $post);
@@ -180,7 +257,7 @@ class Api
             if (count($temp = explode("\t", $log)) === 4) {
                 return "<h1>" . $temp[0] . "\t\t" . $temp[1] . "\t\t" . $temp[2] . "</h1>"
                     . "<br>"
-                    . "<pre class='layui-code' lay-title='PHP ERROR' lay-skin='notepad'>"
+                    . "<pre class='layui-code' lay-title='交互信息' lay-skin='notepad'>"
                     . str_replace("<br>", "\n", substr($temp[3], 4))
                     . "</pre>"
                     . "<br><br>";

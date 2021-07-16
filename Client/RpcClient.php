@@ -3,11 +3,6 @@
 class RpcClient
 {
     /**
-     * 包头长度
-     */
-    const PACKAGE_FIXED_LENGTH = 4;
-
-    /**
      * 收发超时时间（秒）
      */
     const TIME_OUT = 5;
@@ -49,6 +44,20 @@ class RpcClient
      * @var integer
      */
     protected static $asyncStorageDuration = 10;
+
+    /**
+     * 连接通道协议，JsonRpc、JsonHeadTcp、JsonEofTcp
+     *
+     * @var string
+     */
+    public static $channelProtocol = "JsonRpc";
+
+    /**
+     * 数据包协议，连接通道协议为“JsonRpc”时使用，HEAD 或 EOF
+     *
+     * @var string
+     */
+    public static $packageProtocol = "HEAD";
 
     /**
      * 是否是长链接
@@ -259,10 +268,10 @@ class RpcClient
             'param_array' => $arguments,
         ];
 
-        $bin_data = self::encode($data);
+        $bin_data = self::$channelProtocol::encode($data);
 
         if (self::$persistentConnection) {
-            @fwrite($this->connection, self::encode(self::$pingData));
+            @fwrite($this->connection, self::$channelProtocol::encode(self::$pingData));
             $this->recvData();
         }
 
@@ -301,7 +310,7 @@ class RpcClient
 
             $recv_data .= $buffer;
 
-            if (self::input($recv_data) > 0) {
+            if (self::$channelProtocol::input($recv_data) > 0) {
                 break;
             }
         }
@@ -314,28 +323,127 @@ class RpcClient
             throw new Exception("recvData empty");
         }
 
-        return self::decode($recv_data);
+        return self::$channelProtocol::decode($recv_data);
     }
+}
+
+/**
+ * JSON TCP 分发协议，协议包头 + 数据包
+ *
+ * @Author    HSK
+ * @DateTime  2021-07-07 11:14:24
+ */
+class JsonRpc
+{
+    /**
+     * 分包
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-07 11:20:53
+     *
+     * @param string $buffer
+     *
+     * @return integer
+     */
+    public static function input(string $buffer): int
+    {
+        // 拆分数据包
+        $protocol = substr($buffer, 0, 1);
+        $rawData  = substr($buffer, 1);
+
+        // 协议分发处理
+        switch ($protocol) {
+            case chr(65):
+                return 1 + JsonHeadTcp::input($rawData);
+                break;
+            case chr(66):
+                return 1 + JsonEofTcp::input($rawData);
+                break;
+        }
+    }
+
+    /**
+     * 打包
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-07 11:21:02
+     *
+     * @param array $buffer
+     *
+     * @return string
+     */
+    public static function encode(array $buffer): string
+    {
+        switch (RpcClient::$packageProtocol) {
+            case "HEAD":
+                return chr(65) . JsonHeadTcp::encode($buffer);
+                break;
+            case "EOF":
+                return chr(66) . JsonEofTcp::encode($buffer);
+                break;
+        }
+    }
+
+    /**
+     * 解包
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-07 11:21:11
+     *
+     * @param string $buffer
+     *
+     * @return array
+     */
+    public static function decode(string $buffer): array
+    {
+        // 拆分数据包
+        $protocol = substr($buffer, 0, 1);
+        $rawData  = substr($buffer, 1);
+
+        // 协议分发处理
+        switch ($protocol) {
+            case chr(65):
+                return JsonHeadTcp::decode($rawData);
+                break;
+            case chr(66):
+                return JsonEofTcp::decode($rawData);
+                break;
+        }
+    }
+}
+
+/**
+ * JSON TCP 协议，包头 + 包主体
+ *
+ * @Author    HSK
+ * @DateTime  2021-07-07 11:11:39
+ */
+class JsonHeadTcp
+{
+    /**
+     * 包头长度
+     */
+    const PACKAGE_FIXED_LENGTH = 4;
 
     /**
      * 分包
      *
      * @Author    HSK
-     * @DateTime  2021-06-10 14:49:37
+     * @DateTime  2021-07-07 11:12:50
      *
      * @param string $buffer
      *
-     * @return int
+     * @return integer
      */
-    protected static function input(string $buffer): int
+    public static function input(string $buffer): int
     {
         if (strlen($buffer) < self::PACKAGE_FIXED_LENGTH) {
             return 0;
         }
 
-        $result = unpack("Ndata_len", $buffer);
+        $unpackData = unpack("Ndata_len", $buffer);
 
-        $len = $result['data_len'] + self::PACKAGE_FIXED_LENGTH;
+        $len = $unpackData['data_len'] + self::PACKAGE_FIXED_LENGTH;
 
         if (strlen($buffer) < $len) {
             return 0;
@@ -348,13 +456,13 @@ class RpcClient
      * 打包
      *
      * @Author    HSK
-     * @DateTime  2021-06-10 14:46:35
+     * @DateTime  2021-07-07 11:12:55
      *
      * @param array $buffer
      *
      * @return string
      */
-    protected static function encode(array $buffer): string
+    public static function encode(array $buffer): string
     {
         $json = json_encode($buffer, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $len  = strlen($json);
@@ -366,17 +474,80 @@ class RpcClient
      * 解包
      *
      * @Author    HSK
-     * @DateTime  2021-06-10 14:47:19
+     * @DateTime  2021-07-07 11:13:03
      *
      * @param string $buffer
      *
      * @return array
      */
-    protected static function decode(string $buffer): array
+    public static function decode(string $buffer): array
     {
-        $result = unpack("Ndata_len", $buffer);
-        $data   = substr($buffer, self::PACKAGE_FIXED_LENGTH, $result['data_len']);
+        $unpackData = unpack("Ndata_len", $buffer);
+        $data       = substr($buffer, self::PACKAGE_FIXED_LENGTH, $unpackData['data_len']);
 
         return json_decode($data, true);
+    }
+}
+
+/**
+ * JSON TCP 协议，包主体 + 结束符
+ *
+ * @Author    HSK
+ * @DateTime  2021-07-07 11:13:16
+ */
+class JsonEofTcp
+{
+    /**
+     * 分包
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-07 11:14:07
+     *
+     * @param string $buffer
+     *
+     * @return integer
+     */
+    public static function input(string $buffer): int
+    {
+        $pos = strpos($buffer, chr(0));
+        if ($pos === false) {
+            return 0;
+        }
+
+        return $pos + 1;
+    }
+
+    /**
+     * 打包
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-07 11:14:12
+     *
+     * @param array $buffer
+     *
+     * @return string
+     */
+    public static function encode(array $buffer): string
+    {
+        $json = json_encode($buffer, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        return $json . chr(0);
+    }
+
+    /**
+     * 解包
+     *
+     * @Author    HSK
+     * @DateTime  2021-07-07 11:14:17
+     *
+     * @param string $buffer
+     *
+     * @return array
+     */
+    public static function decode(string $buffer): array
+    {
+        $buffer = rtrim($buffer, chr(0));
+
+        return json_decode($buffer, true);
     }
 }

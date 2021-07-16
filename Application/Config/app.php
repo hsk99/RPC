@@ -7,5 +7,7 @@ return [
     'stdoutFile'            => runtime_path() . '/stdout.log',
     'defaultMaxPackageSize' => 1024000,
     'statisticAddress'      => 'udp://127.0.0.1:50002',
-    'statisticDataDir'      => app_path() . '/StatisticData/'
+    'statisticDataDir'      => app_path() . '/StatisticData/',
+    'adminUserName'         => 'rpc',
+    'adminPassWord'         => 'rpc',
 ];

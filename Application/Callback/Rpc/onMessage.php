@@ -33,17 +33,19 @@ class onMessage
         }
 
         // 获得要调用的类、方法、及参数
-        $class          = $message['class'];
-        $method         = $message['method'];
-        $param_array    = $message['param_array'];
-        $transfer_class = 'Service\\' . $class;
+        $class       = $message['class'];
+        $method      = $message['method'];
+        $param_array = $message['param_array'];
+
+        // 调用类
+        $transfer_class = 'Service\\' . (strpos($class, ".") > 0 ? str_replace(".", "\\", $class) : $class);
 
         StatisticClient::tick($class, $method);
 
         // 验证文件是否载入
-        $include_file = services_path() . "/$class.php";
-        if (!in_array($include_file, get_included_files()) && is_file($include_file)) {
-            include $include_file;
+        $include_file = services_path() . "/" . (strpos($class, ".") > 0 ? str_replace(".", "/", $class) : $class) . ".php";
+        if (!class_exists($transfer_class) && is_file($include_file)) {
+            require_once $include_file;
         }
 
         // 验证类、方法是否存在
